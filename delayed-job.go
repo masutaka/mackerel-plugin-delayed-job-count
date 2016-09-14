@@ -15,9 +15,9 @@ var graphdef = map[string](mackerelplugin.Graphs){
 		Unit:  "integer",
 		Metrics: [](mackerelplugin.Metrics){
 			{Name: "total_processed", Label: "Total Processed Job Count", Type: "uint64"},
-			{Name: "queued", Label: "Queued Job Count"},
-			{Name: "processing", Label: "Processing Job Count"},
-			{Name: "failed", Label: "Failed Job Count"},
+			{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
+			{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
+			{Name: "failed", Label: "Failed Job Count", Type: "uint64"},
 		},
 	},
 }
@@ -60,7 +60,7 @@ SELECT count FROM (
 
 	rows.Next()
 
-	var queuedCount, processingCount, failedCount float64
+	var queuedCount, processingCount, failedCount uint64
 
 	err = rows.Scan(&queuedCount)
 	if err != nil {
