@@ -1,5 +1,5 @@
-mackerel-plugin-delayed-job
-===========================
+mackerel-plugin-delayed-job-count
+=================================
 
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
 
@@ -10,7 +10,7 @@ mackerel-plugin-delayed-job
 Synopsis
 --------
 
-    mackerel-plugin-delayed-job -dsn=<dataSourceName>
+    mackerel-plugin-delayed-job-count -dsn=<dataSourceName>
 
 See https://github.com/go-sql-driver/mysql/#dsn-data-source-name
 
@@ -24,4 +24,4 @@ Example of mackerel-agent.conf
 ------------------------------
 
     [plugin.metrics.delayed_job_count]
-    command = "/path/to/mackerel-plugin-delayed-job -dsn=<dataSourceName>"
+    command = "/path/to/mackerel-plugin-delayed-job-count -dsn=<dataSourceName>"
