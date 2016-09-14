@@ -118,23 +118,21 @@ SELECT count FROM (
 
 	rows.Next()
 
-	var queuedCount, processingCount, failedCount uint64
-
-	err = rows.Scan(&queuedCount)
+	err = rows.Scan(&queued)
 	if err != nil {
 		return 0, 0, 0, err
 	}
 
 	rows.Next()
 
-	err = rows.Scan(&processingCount)
+	err = rows.Scan(&processing)
 	if err != nil {
 		return 0, 0, 0, err
 	}
 
 	rows.Next()
 
-	err = rows.Scan(&failedCount)
+	err = rows.Scan(&failed)
 	if err != nil {
 		return 0, 0, 0, err
 	}
@@ -144,7 +142,7 @@ SELECT count FROM (
 		return 0, 0, 0, err
 	}
 
-	return queuedCount, processingCount, failedCount, err
+	return queued, processing, failed, err
 }
 
 func (dj DelayedJobPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
