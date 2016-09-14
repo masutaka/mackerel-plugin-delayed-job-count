@@ -16,6 +16,7 @@ var graphdef = map[string](mackerelplugin.Graphs){
 		Metrics: [](mackerelplugin.Metrics){
 			{Name: "queued", Label: "Queued Job Count"},
 			{Name: "processing", Label: "Processing Job Count"},
+			{Name: "failed", Label: "Failed Job Count"},
 		},
 	},
 }
@@ -42,6 +43,9 @@ SELECT count FROM (
   UNION ALL
   -- processing job
   SELECT 2 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NULL AND locked_by IS NOT NULL
+  UNION ALL
+  -- failed job
+  SELECT 3 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NOT NULL
 ) AS t ORDER BY t.id;
 `
 
@@ -53,7 +57,7 @@ SELECT count FROM (
 
 	rows.Next()
 
-	var queuedCount, processingCount float64
+	var queuedCount, processingCount, failedCount float64
 
 	err = rows.Scan(&queuedCount)
 	if err != nil {
@@ -67,6 +71,13 @@ SELECT count FROM (
 		return nil, err
 	}
 
+	rows.Next()
+
+	err = rows.Scan(&failedCount)
+	if err != nil {
+		return nil, err
+	}
+
 	err = rows.Err()
 	if err != nil {
 		return nil, err
@@ -75,6 +86,7 @@ SELECT count FROM (
 	return map[string]interface{}{
 		"queued":     queuedCount,
 		"processing": processingCount,
+		"failed":     failedCount,
 	}, nil
 }
 
