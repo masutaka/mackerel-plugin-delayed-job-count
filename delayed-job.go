@@ -39,49 +39,7 @@ func (dj DelayedJobPlugin) FetchMetrics() (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	const query string = `
-SELECT count FROM (
-  -- queued job
-  SELECT 1 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NULL AND locked_by IS NULL
-  UNION ALL
-  -- processing job
-  SELECT 2 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NULL AND locked_by IS NOT NULL
-  UNION ALL
-  -- failed job
-  SELECT 3 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NOT NULL
-) AS t ORDER BY t.id;
-`
-
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	rows.Next()
-
-	var queuedCount, processingCount, failedCount uint64
-
-	err = rows.Scan(&queuedCount)
-	if err != nil {
-		return nil, err
-	}
-
-	rows.Next()
-
-	err = rows.Scan(&processingCount)
-	if err != nil {
-		return nil, err
-	}
-
-	rows.Next()
-
-	err = rows.Scan(&failedCount)
-	if err != nil {
-		return nil, err
-	}
-
-	err = rows.Err()
+	queuedCount, processingCount, failedCount, err := GetOtherCounts(db)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +94,57 @@ func NthAutoIncrement(columns []string) int {
 	}
 
 	return -1
+}
+
+func GetOtherCounts(db *sql.DB) (queued uint64, processing uint64, failed uint64, error error) {
+	const query string = `
+SELECT count FROM (
+  -- queued job
+  SELECT 1 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NULL AND locked_by IS NULL
+  UNION ALL
+  -- processing job
+  SELECT 2 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NULL AND locked_by IS NOT NULL
+  UNION ALL
+  -- failed job
+  SELECT 3 AS id, COUNT(*) AS count FROM delayed_jobs WHERE failed_at IS NOT NULL
+) AS t ORDER BY t.id;
+`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+
+	var queuedCount, processingCount, failedCount uint64
+
+	err = rows.Scan(&queuedCount)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	rows.Next()
+
+	err = rows.Scan(&processingCount)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	rows.Next()
+
+	err = rows.Scan(&failedCount)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return queuedCount, processingCount, failedCount, err
 }
 
 func (dj DelayedJobPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
