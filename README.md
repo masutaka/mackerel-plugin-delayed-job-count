@@ -5,18 +5,23 @@ mackerel-plugin-delayed-job
 
 [license]: https://masutaka.mit-license.org/
 
-delayed\_job custom metrics plugin for mackerel.io agent.
+[delayed_job](https://rubygems.org/gems/delayed_job) custom metrics plugin for mackerel.io agent.
 
-## Synopsis
+Synopsis
+--------
 
     mackerel-plugin-delayed-job -dsn=<dataSourceName>
 
-## Requirements
+See https://github.com/go-sql-driver/mysql/#dsn-data-source-name
 
-- [delayed_job](https://rubygems.org/gems/delayed_job)
+SQL Drivers
+-----------
 
-## Example of mackerel-agent.conf
+* MySQL
+* PostgreSQL (WIP)
 
+Example of mackerel-agent.conf
+------------------------------
 
     [plugin.metrics.delayed_job_count]
     command = "/path/to/mackerel-plugin-delayed-job -dsn=<dataSourceName>"

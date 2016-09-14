@@ -96,7 +96,7 @@ func (dj DelayedJobPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) 
 
 func main() {
 	optName := flag.String("name", "mysql", "driverName")
-	optDSN := flag.String("dsn", "", "dataSourceName (See https://github.com/go-sql-driver/mysql/#dsn-data-source-name)")
+	optDSN := flag.String("dsn", "", "dataSourceName")
 	flag.Parse()
 
 	var delayed_job DelayedJobPlugin
