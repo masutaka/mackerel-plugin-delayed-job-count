@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mackerelio/go-mackerel-plugin-helper"
@@ -13,6 +14,7 @@ var graphdef = map[string](mackerelplugin.Graphs){
 		Label: "delayed_job",
 		Unit:  "integer",
 		Metrics: [](mackerelplugin.Metrics){
+			{Name: "total_processed", Label: "Total Processed Job Count", Type: "uint64"},
 			{Name: "queued", Label: "Queued Job Count"},
 			{Name: "processing", Label: "Processing Job Count"},
 			{Name: "failed", Label: "Failed Job Count"},
@@ -31,6 +33,11 @@ func (dj DelayedJobPlugin) FetchMetrics() (map[string]interface{}, error) {
 		return nil, err
 	}
 	defer db.Close()
+
+	totalProcessedCount, err := GetTotalProcessedCount(db)
+	if err != nil {
+		return nil, err
+	}
 
 	const query string = `
 SELECT count FROM (
@@ -80,10 +87,55 @@ SELECT count FROM (
 	}
 
 	return map[string]interface{}{
-		"queued":     queuedCount,
-		"processing": processingCount,
-		"failed":     failedCount,
+		"total_processed": totalProcessedCount,
+		"queued":          queuedCount,
+		"processing":      processingCount,
+		"failed":          failedCount,
 	}, nil
+}
+
+func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
+	rows, err := db.Query("SHOW TABLE STATUS LIKE 'delayed_jobs'")
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return 0, err
+	}
+
+	rows.Next()
+
+	values := make([]sql.RawBytes, len(columns))
+	scanArgs := make([]interface{}, len(values))
+
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	err = rows.Scan(scanArgs...)
+	if err != nil {
+		return 0, err
+	}
+
+	autoIncrement, err := strconv.ParseUint(string(values[NthAutoIncrement(columns)]), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return autoIncrement - 1, err
+}
+
+func NthAutoIncrement(columns []string) int {
+	for key, value := range columns {
+		if value == "Auto_increment" {
+			return key
+		}
+	}
+
+	return -1
 }
 
 func (dj DelayedJobPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
