@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mackerelio/go-mackerel-plugin-helper"
@@ -27,9 +26,6 @@ type DelayedJobPlugin struct {
 }
 
 func (dj DelayedJobPlugin) FetchMetrics() (map[string]interface{}, error) {
-
-	fmt.Printf("driverName (%s), dataSourceName (%s)\n", dj.driverName, dj.dataSourceName)
-
 	db, err := sql.Open(dj.driverName, dj.dataSourceName)
 	if err != nil {
 		return nil, err
