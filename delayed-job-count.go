@@ -11,7 +11,7 @@ import (
 
 var graphdef = map[string](mackerelplugin.Graphs){
 	"delayed_job": {
-		Label: "delayed_job",
+		Label: "Delayed Job Count",
 		Unit:  "integer",
 		Metrics: [](mackerelplugin.Metrics){
 			{Name: "processed", Label: "Processed Job Count", Diff: true},
@@ -22,12 +22,12 @@ var graphdef = map[string](mackerelplugin.Graphs){
 	},
 }
 
-type DelayedJobPlugin struct {
+type DelayedJobCountPlugin struct {
 	driverName     string
 	dataSourceName string
 }
 
-func (dj DelayedJobPlugin) FetchMetrics() (map[string]interface{}, error) {
+func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	db, err := sql.Open(dj.driverName, dj.dataSourceName)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ SELECT count FROM (
 	return queued, processing, failed, err
 }
 
-func (dj DelayedJobPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
+func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
 	return graphdef
 }
 
@@ -154,11 +154,11 @@ func main() {
 	optDSN := flag.String("dsn", "", "dataSourceName")
 	flag.Parse()
 
-	var delayed_job DelayedJobPlugin
+	var delayedJobCount DelayedJobCountPlugin
 
-	delayed_job.driverName = *optName
-	delayed_job.dataSourceName = *optDSN
+	delayedJobCount.driverName = *optName
+	delayedJobCount.dataSourceName = *optDSN
 
-	helper := mackerelplugin.NewMackerelPlugin(delayed_job)
+	helper := mackerelplugin.NewMackerelPlugin(delayedJobCount)
 	helper.Run()
 }
