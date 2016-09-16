@@ -14,7 +14,7 @@ var graphdef = map[string](mackerelplugin.Graphs){
 		Label: "delayed_job",
 		Unit:  "integer",
 		Metrics: [](mackerelplugin.Metrics){
-			{Name: "total_processed", Label: "Total Processed Job Count", Type: "uint64"},
+			{Name: "processed", Label: "Processed Job Count", Diff: true},
 			{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
 			{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
 			{Name: "failed", Label: "Failed Job Count", Type: "uint64"},
@@ -45,10 +45,10 @@ func (dj DelayedJobPlugin) FetchMetrics() (map[string]interface{}, error) {
 	}
 
 	return map[string]interface{}{
-		"total_processed": totalProcessedCount,
-		"queued":          queuedCount,
-		"processing":      processingCount,
-		"failed":          failedCount,
+		"processed":  totalProcessedCount,
+		"queued":     queuedCount,
+		"processing": processingCount,
+		"failed":     failedCount,
 	}, nil
 }
 
