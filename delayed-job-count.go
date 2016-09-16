@@ -22,11 +22,13 @@ var graphdef = map[string](mackerelplugin.Graphs){
 	},
 }
 
+// DelayedJobCountPlugin structure
 type DelayedJobCountPlugin struct {
 	driverName     string
 	dataSourceName string
 }
 
+// FetchMetrics fetchs the metrics
 func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	db, err := sql.Open(dj.driverName, dj.dataSourceName)
 	if err != nil {
@@ -52,6 +54,7 @@ func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	}, nil
 }
 
+// GetTotalProcessedCount is total processed count
 func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
 	rows, err := db.Query("SHOW TABLE STATUS LIKE 'delayed_jobs'")
 	if err != nil {
@@ -86,6 +89,7 @@ func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
 	return autoIncrement - 1, err
 }
 
+// NthAutoIncrement is position in columns
 func NthAutoIncrement(columns []string) int {
 	for key, value := range columns {
 		if value == "Auto_increment" {
@@ -96,6 +100,7 @@ func NthAutoIncrement(columns []string) int {
 	return -1
 }
 
+// GetOtherCounts is some counts except the total processed count
 func GetOtherCounts(db *sql.DB) (queued uint64, processing uint64, failed uint64, error error) {
 	const query string = `
 SELECT count FROM (
@@ -145,6 +150,7 @@ SELECT count FROM (
 	return queued, processing, failed, err
 }
 
+// GraphDefinition is mackerel graph definition
 func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
 	return graphdef
 }
