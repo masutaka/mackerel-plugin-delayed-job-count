@@ -3,7 +3,7 @@ mackerel-plugin-delayed-job-count
 
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
 
-[license]: https://masutaka.mit-license.org/
+[license]: https://github.com/masutaka/mackerel-plugin-delayed-job-count/blob/master/LICENSE
 
 [delayed_job](https://rubygems.org/gems/delayed_job) custom metrics plugin for mackerel.io agent.
 
