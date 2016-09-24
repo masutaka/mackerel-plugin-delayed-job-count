@@ -2,8 +2,10 @@ mackerel-plugin-delayed-job-count
 =================================
 
 [![License](https://img.shields.io/github/license/masutaka/mackerel-plugin-delayed-job-count.svg?maxAge=2592000)][license]
+[![GoDoc](https://godoc.org/github.com/masutaka/mackerel-plugin-delayed-job-count?status.svg)][godoc]
 
 [license]: https://github.com/masutaka/mackerel-plugin-delayed-job-count/blob/master/LICENSE
+[godoc]: https://godoc.org/github.com/masutaka/mackerel-plugin-delayed-job-count
 
 Description
 -----------
