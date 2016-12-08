@@ -6,14 +6,14 @@ import (
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/mackerelio/go-mackerel-plugin-helper"
+	mp "github.com/mackerelio/go-mackerel-plugin-helper"
 )
 
-var graphdef = map[string](mackerelplugin.Graphs){
+var graphdef = map[string](mp.Graphs){
 	"delayed_job": {
 		Label: "Delayed Job Count",
 		Unit:  "integer",
-		Metrics: [](mackerelplugin.Metrics){
+		Metrics: [](mp.Metrics){
 			{Name: "processed", Label: "Processed Job Count", Diff: true},
 			{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
 			{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
@@ -151,7 +151,7 @@ SELECT count FROM (
 }
 
 // GraphDefinition is mackerel graph definition
-func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mackerelplugin.Graphs) {
+func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
 	return graphdef
 }
 
@@ -165,6 +165,6 @@ func main() {
 	delayedJobCount.driverName = *optName
 	delayedJobCount.dataSourceName = *optDSN
 
-	helper := mackerelplugin.NewMackerelPlugin(delayedJobCount)
+	helper := mp.NewMackerelPlugin(delayedJobCount)
 	helper.Run()
 }
