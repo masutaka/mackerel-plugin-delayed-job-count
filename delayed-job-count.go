@@ -41,12 +41,12 @@ func (p DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	}
 	defer db.Close()
 
-	totalProcessedCount, err := GetTotalProcessedCount(db)
+	totalProcessedCount, err := getTotalProcessedCount(db)
 	if err != nil {
 		return nil, err
 	}
 
-	queuedCount, processingCount, failedCount, err := GetOtherCounts(db)
+	queuedCount, processingCount, failedCount, err := getOtherCounts(db)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +59,8 @@ func (p DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	}, nil
 }
 
-// GetTotalProcessedCount is total processed count
-func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
+// getTotalProcessedCount is total processed count
+func getTotalProcessedCount(db *sql.DB) (uint64, error) {
 	rows, err := db.Query("SHOW TABLE STATUS LIKE 'delayed_jobs'")
 	if err != nil {
 		return 0, err
@@ -86,7 +86,7 @@ func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
 		return 0, err
 	}
 
-	autoIncrement, err := strconv.ParseUint(string(values[NthAutoIncrement(columns)]), 10, 64)
+	autoIncrement, err := strconv.ParseUint(string(values[nthAutoIncrement(columns)]), 10, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -94,8 +94,8 @@ func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
 	return autoIncrement - 1, err
 }
 
-// NthAutoIncrement is position in columns
-func NthAutoIncrement(columns []string) int {
+// nthAutoIncrement is position in columns
+func nthAutoIncrement(columns []string) int {
 	for key, value := range columns {
 		if value == "Auto_increment" {
 			return key
@@ -105,8 +105,8 @@ func NthAutoIncrement(columns []string) int {
 	return -1
 }
 
-// GetOtherCounts is some counts except the total processed count
-func GetOtherCounts(db *sql.DB) (queued uint64, processing uint64, failed uint64, error error) {
+// getOtherCounts is some counts except the total processed count
+func getOtherCounts(db *sql.DB) (queued uint64, processing uint64, failed uint64, error error) {
 	const query string = `
 SELECT count FROM (
   -- queued job
