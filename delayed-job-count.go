@@ -9,19 +9,6 @@ import (
 	mp "github.com/mackerelio/go-mackerel-plugin-helper"
 )
 
-var graphdef = map[string](mp.Graphs){
-	"delayed_job": {
-		Label: "Delayed Job Count",
-		Unit:  "integer",
-		Metrics: [](mp.Metrics){
-			{Name: "processed", Label: "Processed Job Count", Diff: true},
-			{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
-			{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
-			{Name: "failed", Label: "Failed Job Count", Type: "uint64"},
-		},
-	},
-}
-
 // DelayedJobCountPlugin mackerel plugin for delayed_job
 type DelayedJobCountPlugin struct {
 	driverName     string
@@ -152,6 +139,20 @@ SELECT count FROM (
 
 // GraphDefinition interface for PluginWithPrefix
 func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
+	// metric value structure
+	var graphdef = map[string](mp.Graphs){
+		"delayed_job": {
+			Label: "Delayed Job Count",
+			Unit:  "integer",
+			Metrics: [](mp.Metrics){
+				{Name: "processed", Label: "Processed Job Count", Diff: true},
+				{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
+				{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
+				{Name: "failed", Label: "Failed Job Count", Type: "uint64"},
+			},
+		},
+	}
+
 	return graphdef
 }
 
