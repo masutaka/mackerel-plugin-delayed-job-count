@@ -9,6 +9,20 @@ import (
 	mp "github.com/mackerelio/go-mackerel-plugin-helper"
 )
 
+func main() {
+	optName := flag.String("name", "mysql", "driverName")
+	optDSN := flag.String("dsn", "", "dataSourceName")
+	flag.Parse()
+
+	var delayedJobCount DelayedJobCountPlugin
+
+	delayedJobCount.driverName = *optName
+	delayedJobCount.dataSourceName = *optDSN
+
+	helper := mp.NewMackerelPlugin(delayedJobCount)
+	helper.Run()
+}
+
 // DelayedJobCountPlugin mackerel plugin for delayed_job
 type DelayedJobCountPlugin struct {
 	driverName     string
@@ -154,18 +168,4 @@ func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
 	}
 
 	return graphdef
-}
-
-func main() {
-	optName := flag.String("name", "mysql", "driverName")
-	optDSN := flag.String("dsn", "", "dataSourceName")
-	flag.Parse()
-
-	var delayedJobCount DelayedJobCountPlugin
-
-	delayedJobCount.driverName = *optName
-	delayedJobCount.dataSourceName = *optDSN
-
-	helper := mp.NewMackerelPlugin(delayedJobCount)
-	helper.Run()
 }
