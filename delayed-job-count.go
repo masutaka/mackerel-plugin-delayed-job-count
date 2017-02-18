@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"strconv"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	mp "github.com/mackerelio/go-mackerel-plugin-helper"
@@ -12,12 +13,14 @@ import (
 func main() {
 	optName := flag.String("name", "mysql", "driverName")
 	optDSN := flag.String("dsn", "", "dataSourceName")
+	optMetricKeyPrefix := flag.String("metric-key-prefix", "delayed_job", "Metric Key Prefix")
 	flag.Parse()
 
 	var delayedJobCount DelayedJobCountPlugin
 
 	delayedJobCount.driverName = *optName
 	delayedJobCount.dataSourceName = *optDSN
+	delayedJobCount.prefix = *optMetricKeyPrefix
 
 	helper := mp.NewMackerelPlugin(delayedJobCount)
 	helper.Run()
@@ -27,11 +30,12 @@ func main() {
 type DelayedJobCountPlugin struct {
 	driverName     string
 	dataSourceName string
+	prefix         string
 }
 
 // FetchMetrics interface for PluginWithPrefix
-func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
-	db, err := sql.Open(dj.driverName, dj.dataSourceName)
+func (p DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
+	db, err := sql.Open(p.driverName, p.dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -152,11 +156,13 @@ SELECT count FROM (
 }
 
 // GraphDefinition interface for PluginWithPrefix
-func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
+func (p DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
+	labelPrefix := strings.Title(p.prefix)
+
 	// metric value structure
 	var graphdef = map[string](mp.Graphs){
-		"delayed_job": {
-			Label: "Delayed Job Count",
+		"count": {
+			Label: (labelPrefix + " Count"),
 			Unit:  "integer",
 			Metrics: [](mp.Metrics){
 				{Name: "processed", Label: "Processed Job Count", Diff: true},
@@ -168,4 +174,12 @@ func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
 	}
 
 	return graphdef
+}
+
+// MetricKeyPrefix interface for PluginWithPrefix
+func (p DelayedJobCountPlugin) MetricKeyPrefix() string {
+	if p.prefix == "" {
+		p.prefix = "delayed_job"
+	}
+	return p.prefix
 }
