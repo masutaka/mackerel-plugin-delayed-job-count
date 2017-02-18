@@ -22,13 +22,13 @@ var graphdef = map[string](mp.Graphs){
 	},
 }
 
-// DelayedJobCountPlugin structure
+// DelayedJobCountPlugin mackerel plugin for delayed_job
 type DelayedJobCountPlugin struct {
 	driverName     string
 	dataSourceName string
 }
 
-// FetchMetrics fetchs the metrics
+// FetchMetrics interface for PluginWithPrefix
 func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	db, err := sql.Open(dj.driverName, dj.dataSourceName)
 	if err != nil {
@@ -150,7 +150,7 @@ SELECT count FROM (
 	return queued, processing, failed, err
 }
 
-// GraphDefinition is mackerel graph definition
+// GraphDefinition interface for PluginWithPrefix
 func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
 	return graphdef
 }
