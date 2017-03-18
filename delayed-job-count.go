@@ -4,44 +4,49 @@ import (
 	"database/sql"
 	"flag"
 	"strconv"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	mp "github.com/mackerelio/go-mackerel-plugin-helper"
 )
 
-var graphdef = map[string](mp.Graphs){
-	"delayed_job": {
-		Label: "Delayed Job Count",
-		Unit:  "integer",
-		Metrics: [](mp.Metrics){
-			{Name: "processed", Label: "Processed Job Count", Diff: true},
-			{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
-			{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
-			{Name: "failed", Label: "Failed Job Count", Type: "uint64"},
-		},
-	},
+func main() {
+	optName := flag.String("name", "mysql", "driverName")
+	optDSN := flag.String("dsn", "", "dataSourceName")
+	optMetricKeyPrefix := flag.String("metric-key-prefix", "delayed_job", "Metric Key Prefix")
+	flag.Parse()
+
+	var delayedJobCount DelayedJobCountPlugin
+
+	delayedJobCount.driverName = *optName
+	delayedJobCount.dataSourceName = *optDSN
+	delayedJobCount.prefix = *optMetricKeyPrefix
+
+	helper := mp.NewMackerelPlugin(delayedJobCount)
+	helper.Run()
 }
 
-// DelayedJobCountPlugin structure
+// DelayedJobCountPlugin mackerel plugin for delayed_job
 type DelayedJobCountPlugin struct {
 	driverName     string
 	dataSourceName string
+	prefix         string
 }
 
-// FetchMetrics fetchs the metrics
-func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
-	db, err := sql.Open(dj.driverName, dj.dataSourceName)
+// FetchMetrics interface for PluginWithPrefix
+func (p DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
+	db, err := sql.Open(p.driverName, p.dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
-	totalProcessedCount, err := GetTotalProcessedCount(db)
+	totalProcessedCount, err := getTotalProcessedCount(db)
 	if err != nil {
 		return nil, err
 	}
 
-	queuedCount, processingCount, failedCount, err := GetOtherCounts(db)
+	queuedCount, processingCount, failedCount, err := getOtherCounts(db)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +59,8 @@ func (dj DelayedJobCountPlugin) FetchMetrics() (map[string]interface{}, error) {
 	}, nil
 }
 
-// GetTotalProcessedCount is total processed count
-func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
+// getTotalProcessedCount is total processed count
+func getTotalProcessedCount(db *sql.DB) (uint64, error) {
 	rows, err := db.Query("SHOW TABLE STATUS LIKE 'delayed_jobs'")
 	if err != nil {
 		return 0, err
@@ -81,7 +86,7 @@ func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
 		return 0, err
 	}
 
-	autoIncrement, err := strconv.ParseUint(string(values[NthAutoIncrement(columns)]), 10, 64)
+	autoIncrement, err := strconv.ParseUint(string(values[nthAutoIncrement(columns)]), 10, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -89,8 +94,8 @@ func GetTotalProcessedCount(db *sql.DB) (uint64, error) {
 	return autoIncrement - 1, err
 }
 
-// NthAutoIncrement is position in columns
-func NthAutoIncrement(columns []string) int {
+// nthAutoIncrement is position in columns
+func nthAutoIncrement(columns []string) int {
 	for key, value := range columns {
 		if value == "Auto_increment" {
 			return key
@@ -100,8 +105,8 @@ func NthAutoIncrement(columns []string) int {
 	return -1
 }
 
-// GetOtherCounts is some counts except the total processed count
-func GetOtherCounts(db *sql.DB) (queued uint64, processing uint64, failed uint64, error error) {
+// getOtherCounts is some counts except the total processed count
+func getOtherCounts(db *sql.DB) (queued uint64, processing uint64, failed uint64, error error) {
 	const query string = `
 SELECT count FROM (
   -- queued job
@@ -150,21 +155,31 @@ SELECT count FROM (
 	return queued, processing, failed, err
 }
 
-// GraphDefinition is mackerel graph definition
-func (dj DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
+// GraphDefinition interface for PluginWithPrefix
+func (p DelayedJobCountPlugin) GraphDefinition() map[string](mp.Graphs) {
+	labelPrefix := strings.Title(p.prefix)
+
+	// metric value structure
+	var graphdef = map[string](mp.Graphs){
+		"count": {
+			Label: (labelPrefix + " Count"),
+			Unit:  "integer",
+			Metrics: [](mp.Metrics){
+				{Name: "processed", Label: "Processed Job Count", Diff: true},
+				{Name: "queued", Label: "Queued Job Count", Type: "uint64"},
+				{Name: "processing", Label: "Processing Job Count", Type: "uint64"},
+				{Name: "failed", Label: "Failed Job Count", Type: "uint64"},
+			},
+		},
+	}
+
 	return graphdef
 }
 
-func main() {
-	optName := flag.String("name", "mysql", "driverName")
-	optDSN := flag.String("dsn", "", "dataSourceName")
-	flag.Parse()
-
-	var delayedJobCount DelayedJobCountPlugin
-
-	delayedJobCount.driverName = *optName
-	delayedJobCount.dataSourceName = *optDSN
-
-	helper := mp.NewMackerelPlugin(delayedJobCount)
-	helper.Run()
+// MetricKeyPrefix interface for PluginWithPrefix
+func (p DelayedJobCountPlugin) MetricKeyPrefix() string {
+	if p.prefix == "" {
+		p.prefix = "delayed_job"
+	}
+	return p.prefix
 }
